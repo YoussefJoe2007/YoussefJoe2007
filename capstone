@@ -1,0 +1,254 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace WorkerEvaluationSystem
+{
+    class Worker
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string IDNumber { get; set; }
+        public string PhoneNumber { get; set; }
+        public bool Verified { get; set; }
+
+        public Worker(string name, int age, string idNumber, string phoneNumber)
+        {
+            Name = name;
+            Age = age;
+            IDNumber = idNumber;
+            PhoneNumber = phoneNumber;
+            Verified = false;
+        }
+    }
+
+    class HealthCheck
+    {
+        public string CheckType { get; set; }
+        public bool Passed { get; set; }
+
+        public HealthCheck(string checkType, bool passed)
+        {
+            CheckType = checkType;
+            Passed = passed;
+        }
+    }
+
+    class HealthInformation
+    {
+        public bool PassedTests { get; set; }
+        public bool AllowedEntry { get; set; }
+        public bool InfectiousDiseases { get; set; }
+        public bool ChronicDiseases { get; set; }
+        public List<HealthCheck> HealthChecks { get; set; }
+
+        public HealthInformation()
+        {
+            HealthChecks = new List<HealthCheck>();
+        }
+    }
+
+    class QueueItem
+    {
+        public Worker Worker { get; set; }
+        public HealthInformation HealthInformation { get; set; }
+
+        public QueueItem(Worker worker, HealthInformation healthInformation)
+        {
+            Worker = worker;
+            HealthInformation = healthInformation;
+        }
+    }
+
+    class WorkerEvaluationSystem
+    {
+        static void Main(string[] args)
+        {
+            Queue<QueueItem> workerQueue = new Queue<QueueItem>();
+            List<QueueItem> evaluatedWorkers = new List<QueueItem>();
+
+            while (true)
+            {
+                Console.WriteLine("================================ ");
+                Console.WriteLine("Welcome to the Worker Evaluation System!");
+                Console.WriteLine("================================ ");
+                Console.WriteLine("1. Enter Worker Data");
+                Console.WriteLine("2. Verify Worker Data");
+                Console.WriteLine("3. Perform Tests");
+                Console.WriteLine("4. View Worker Evaluation");
+                Console.WriteLine("5. View All Evaluated Workers");
+                Console.WriteLine("6. Exit");
+                Console.WriteLine("================================ ");
+                Console.WriteLine("Please select an option: ");
+                string choice = Console.ReadLine();
+                Thread.Sleep(1000);
+
+                switch (choice)
+                {
+                    case "1":
+                        EnterWorkerData(workerQueue);
+                        break;
+
+                    case "2":
+                        VerifyWorkerData(workerQueue);
+                        break;
+
+                    case "3":
+                        PerformTests(workerQueue, evaluatedWorkers);
+                        break;
+
+                    case "4":
+                        ViewWorkerEvaluation(workerQueue);
+                        break;
+
+                    case "5":
+                        ViewAllEvaluatedWorkers(evaluatedWorkers);
+                        break;
+
+                    case "6":
+                        ExitProgram();
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid option. Please try again.");
+                        Thread.Sleep(2000);
+                        break;
+                }
+                Thread.Sleep(1000);
+            }
+        }
+
+        static void EnterWorkerData(Queue<QueueItem> workerQueue)
+        {
+            Console.WriteLine("Enter Worker Data:");
+            Console.Write("Name: ");
+            string name = Console.ReadLine();
+            Console.Write("Age: ");
+            if (!int.TryParse(Console.ReadLine(), out int age) || age <= 0)
+            {
+                Console.WriteLine("Invalid age. Please try again.");
+                return;
+            }
+            Console.Write("ID Number: ");
+            string idNumber = Console.ReadLine();
+
+            string phoneNumber;
+            while (true)
+            {
+                Console.Write("Phone Number (11 digits): ");
+                phoneNumber = Console.ReadLine();
+                if (phoneNumber.Length == 11 && long.TryParse(phoneNumber, out _))
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid phone number. Please ensure it is 11 digits long.");
+            }
+
+            Worker worker = new Worker(name, age, idNumber, phoneNumber);
+            HealthInformation healthInformation = new HealthInformation();
+            workerQueue.Enqueue(new QueueItem(worker, healthInformation));
+            Console.WriteLine("Worker data entered successfully.");
+        }
+
+        static void VerifyWorkerData(Queue<QueueItem> workerQueue)
+        {
+            Console.WriteLine("Verify Worker Data:");
+            if (workerQueue.Count == 0)
+            {
+                Console.WriteLine("No worker data available.");
+            }
+            else
+            {
+                QueueItem currentWorkerItem = workerQueue.Peek();
+                currentWorkerItem.Worker.Verified = true;
+                Console.WriteLine("Worker data verified successfully.");
+            }
+        }
+
+        static void PerformTests(Queue<QueueItem> workerQueue, List<QueueItem> evaluatedWorkers)
+        {
+            Console.WriteLine("Perform Tests:");
+            if (workerQueue.Count == 0)
+            {
+                Console.WriteLine("No worker data available.");
+            }
+            else
+            {
+                QueueItem testWorkerItem = workerQueue.Dequeue();
+                HealthCheck infectiousDiseaseCheck = new HealthCheck("Infectious Diseases", false);
+                HealthCheck chronicDiseaseCheck = new HealthCheck("Chronic Diseases", false);
+
+                testWorkerItem.HealthInformation.HealthChecks.Add(infectiousDiseaseCheck);
+                testWorkerItem.HealthInformation.HealthChecks.Add(chronicDiseaseCheck);
+
+                testWorkerItem.HealthInformation.PassedTests = true;
+                testWorkerItem.HealthInformation.AllowedEntry = !infectiousDiseaseCheck.Passed && !chronicDiseaseCheck.Passed;
+                testWorkerItem.HealthInformation.InfectiousDiseases = infectiousDiseaseCheck.Passed;
+                testWorkerItem.HealthInformation.ChronicDiseases = chronicDiseaseCheck.Passed;
+
+                Console.WriteLine("Tests performed successfully.");
+                evaluatedWorkers.Add(testWorkerItem);
+            }
+        }
+
+        static void ViewWorkerEvaluation(Queue<QueueItem> workerQueue)
+        {
+            Console.WriteLine("View Worker Evaluation:");
+            if (workerQueue.Count == 0)
+            {
+                Console.WriteLine("No worker data available.");
+            }
+            else
+            {
+                QueueItem evalWorkerItem = workerQueue.Peek();
+                Worker evalWorker = evalWorkerItem.Worker;
+                HealthInformation evalHealthInfo = evalWorkerItem.HealthInformation;
+
+                DisplayWorkerDetails(evalWorker, evalHealthInfo);
+            }
+        }
+
+        static void ViewAllEvaluatedWorkers(List<QueueItem> evaluatedWorkers)
+        {
+            Console.WriteLine("View All Evaluated Workers:");
+            if (evaluatedWorkers.Count == 0)
+            {
+                Console.WriteLine("No workers have been evaluated yet.");
+            }
+            else
+            {
+                foreach (var item in evaluatedWorkers)
+                {
+                    DisplayWorkerDetails(item.Worker, item.HealthInformation);
+                    Console.WriteLine("--------------------------");
+                }
+            }
+        }
+
+        static void DisplayWorkerDetails(Worker worker, HealthInformation healthInfo)
+        {
+            Console.WriteLine($"Worker Name: {worker.Name}");
+            Console.WriteLine($"Age: {worker.Age}");
+            Console.WriteLine($"ID Number: {worker.IDNumber}");
+            Console.WriteLine($"Phone Number: {worker.PhoneNumber}");
+            Console.WriteLine($"Verified: {worker.Verified}");
+            Console.WriteLine($"Passed Tests: {healthInfo.PassedTests}");
+            Console.WriteLine($"Allowed Entry: {healthInfo.AllowedEntry}");
+            Console.WriteLine($"Infectious Diseases: {healthInfo.InfectiousDiseases}");
+            Console.WriteLine($"Chronic Diseases: {healthInfo.ChronicDiseases}");
+            Console.WriteLine("Health Checks:");
+            foreach (var check in healthInfo.HealthChecks)
+            {
+                Console.WriteLine($"- {check.CheckType}: {(check.Passed ? "Passed" : "Failed")}");
+            }
+        }
+
+        static void ExitProgram()
+        {
+            Console.WriteLine("Exiting the program. Press any key to close.");
+            Console.WriteLine("Loading... ");
+            Thread.Sleep(1000);
+            Console.ReadKey(); 
+            Environment.Exit(0);
+        }
+    }
