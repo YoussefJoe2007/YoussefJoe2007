@@ -5,7 +5,7 @@
 
 <p align="left"> <a href="https://github.com/ryo-ma/github-profile-trophy"><img src="https://github-profile-trophy.vercel.app/?username=eaey" alt="eaey" /></a> </p>
 
-- 🌱 I’m currently learning **Front End Developmet**
+- 🌱 I’m currently learning **Back End Developmet**
 
 - 👨‍💻 All of my projects are available at [)
 
